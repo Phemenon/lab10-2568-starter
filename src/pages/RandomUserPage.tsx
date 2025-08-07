@@ -1,11 +1,12 @@
 import { UserCard } from "../components/UserCard";
 import { cleanUser } from "../libs/CleanUser";
 import axios from "axios";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 export default function RandomUserPage() {
-  const [users, setUsers] = useState("");
+  const [users, setUsers] = useState<any>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [genAmount, setGenAmount] = useState(1);
+  const [isFirstLoad, setIsFirstLoad] = useState(true);
 
   const generateBtnOnClick = async () => {
     setIsLoading(true);
@@ -15,9 +16,28 @@ export default function RandomUserPage() {
     setIsLoading(false);
     const users = resp.data.results;
     //Your code here
+    const cleanUsers = users.map((users: any) => cleanUser(users));
+    console.log(cleanUsers);
     //Process result from api response with map function. Tips use function from /src/libs/CleanUser
+    setUsers(cleanUsers);
     //Then update state with function : setUsers(...)
   };
+
+  useEffect(() => {
+    const savedAmount = localStorage.getItem("genAmount");
+    if (savedAmount) {
+      setGenAmount(JSON.parse(savedAmount));
+    }
+  }, []);
+
+  useEffect(() => {
+    if (isFirstLoad) {
+      setIsFirstLoad(false);
+      return;
+    }
+    const srrgenAmount = JSON.stringify(genAmount);
+    localStorage.setItem("genAmount", srrgenAmount);
+  }, [genAmount]);
 
   return (
     <div style={{ maxWidth: "700px" }} className="mx-auto">
@@ -38,7 +58,17 @@ export default function RandomUserPage() {
       {isLoading && (
         <p className="display-6 text-center fst-italic my-4">Loading ...</p>
       )}
-      {users && !isLoading && users.map(/*code map rendering UserCard here */)}
+      {users &&
+        !isLoading &&
+        users.map((users: any) => (
+          <UserCard
+            key={users.email}
+            name={users.name}
+            imgUrl={users.imgUrl}
+            address={users.address}
+            email={users.email}
+          />
+        ))}
     </div>
   );
 }
